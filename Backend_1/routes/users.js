@@ -4,7 +4,29 @@ const User = require("../models/users");
 
 const router = express.Router();
 
-router.post("/users", async (req, res) => {
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).send({ error: "Email and password are required" });
+  }
+  try {
+    const user = await User.find({ email, password });
+    if (!user) {
+      return res.status(404).send({ error: "User not found" });
+    }
+    res.status(201).send(user[0]);
+  } catch (e) {
+    console.log("Error: ", e);
+    res.status(400).send({ error: "Error while saving user to database" });
+  }
+});
+router.post("/signup", async (req, res) => {
+  const { username, email, password } = req.body;
+  if (!username || !email || !password) {
+    return res
+      .status(400)
+      .send({ error: "Username, email and password are required" });
+  }
   const user = new User(req.body);
   try {
     await user.save();
@@ -76,5 +98,16 @@ router.delete("/users/:id", async (req, res) => {
     res.status(500).send({ error: "Error while deleting user" });
   }
 });
+const createUser = async (req, res) => {
+  try {
+    const { username, email, password } = req.body;
+    const newUser = new User({ username, email, password });
+    await newUser.save(); // Ensure this is called to trigger the pre-save middleware
+    res.status(201).json({ message: 'User created successfully!' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
 
 module.exports = router;
